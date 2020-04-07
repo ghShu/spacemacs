@@ -1,21 +1,40 @@
-# Private directory
 
-The content of this directory is ignored by Git. This is the default place
-where to store your private configuration layers.
+# Table of Contents
 
-To create a new configuration layer:
+1.  [SpacEmacs private layers](#org9a9060c)
+2.  [Installation](#orgdf6fae6)
+3.  [Further reading](#org32c8af1)
 
-    SPC SPC configuration-layer/create-layer RET
 
-Then enter the name of your configuration in the prompt.
+<a id="org9a9060c"></a>
 
-A directory named after the created configuration layer will be created here
-along with template files within it (packages.el and extensions.el, more info
-on the meaning of those files can be found in the [documentation][conf_layers]).
+# SpacEmacs private layers
 
-Each created file has further guidance written in them.
+This repository stores my private configuration layers.
+
+
+<a id="orgdf6fae6"></a>
+
+# Installation
+
+    cd .emacs.d
+    git clone https://github.com/ghShu/spacemacs-private.git private
+
+After that add layer `guanghua` into the
+
+    (defun dotspacemacs/layers()
+      (setq-default dotspacemacs-configuration-layers
+        '(guanghua)
+      )
+    )
 
 Once the configuration is done, restart Emacs to load, install and configure
 your layer.
 
-[conf_layers]: https://github.com/syl20bnr/spacemacs/blob/master/doc/DOCUMENTATION.org#extensions-and-packages
+
+<a id="org32c8af1"></a>
+
+# Further reading
+
+[Spacemacs doc: conf<sub>layers</sub>](https://github.com/syl20bnr/spacemacs/blob/master/doc/DOCUMENTATION.org#extensions-and-packages)
+
