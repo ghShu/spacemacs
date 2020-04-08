@@ -15,7 +15,7 @@
   '(
     ;; org
     (org :location built-in)
-    org-mac-link
+    ;; org-mac-link
     ;; org-octopress
     org-pomodoro
     deft
@@ -46,7 +46,7 @@
         "," 'org-priority)
 
       ;; add path for org-mac-link
-      (push (expand-file-name "~/dropbox/git/org-mode/contrib") load-path)
+      (push (expand-file-name "~/dropbox/git/org-mode/contrib/lisp/") load-path)
       (require 'org-mac-link)
 
       (require 'org-compat)
@@ -85,8 +85,8 @@
       ;; (但是子項目還是會被加密喔)
       (setq org-tags-exclude-from-inheritance (quote ("secret")))
 
-      ;; 用於加密的 GPG 金鑰
-      ;; 可以設定任何 ID 或是設成 nil 來使用對稱式加密 (symmetric encryption)
+      ;; GPG secret key
+      ;; can be ID or nil (symmetric encryption is used with nil)
       (setq org-crypt-key nil)
 
       ;; (add-to-list 'auto-mode-alist '("\.org\\'" . org-mode))
@@ -239,8 +239,8 @@ unwanted space when exporting org-mode to html."
       (load-library "find-lisp")
       (setq org-agenda-files (append
             (find-lisp-find-files "~/dropbox/emacs/" "\.org$")
-            (find-lisp-find-files "~/dropbox/git/" "\.org$")))
-
+            (find-lisp-find-files "~/dropbox/git/io/algorithm" "\.org$")
+            (find-lisp-find-files "~/dropbox/git/io/algorithm" "\.org$")))
 
       ;; (setq org-agenda-gtd-files
             ;; (find-lisp-find-files "~/dropbox/emacs/" "\.org$"))
@@ -258,17 +258,17 @@ unwanted space when exporting org-mode to html."
               ("a" "Appointment" entry (file+headline org-agenda-file-gcal "Capture" )
                 "* %?\n\n%^T\n\n:PROPERTIES:\n\n:END:\n\n")
               ("t" "Todo" entry (file+headline org-agenda-file-gtd "Workspace")
-               (file "~/dropbox/emacs/org-notes/todo.txt")
+               (file "~/dropbox/emacs/org/template/todo.txt")
                :empty-lines 0)
               ("n" "notes"
                entry (file+headline org-agenda-file-note "Quick notes")
-               (file "~/dropbox/emacs/org-notes/todo.txt")
+               (file "~/dropbox/emacs/org/template/todo.txt")
                :empty-lines 0)
               ;; "* %?\n  %i\n %U"
                ;; :empty-lines 1)
               ("k" "Books"
                entry (file+headline org-agenda-file-work "Books")
-               (file "~/dropbox/emacs/org-notes/todo.txt")
+               (file "~/dropbox/emacs/org/template/todo.txt")
                :empty-lines 0)
                ;; "* SOMEDAY [#B] %?\n  %i\n %U"
                ;; :empty-lines 1)
@@ -276,25 +276,25 @@ unwanted space when exporting org-mode to html."
                ;; "* %?\t%^g\n#+BEGIN_SRC %^{language}\n\n#+END_SRC")
               ("w" "work"
                entry (file+headline org-agenda-file-work "Capture")
-               (file "~/dropbox/emacs/org-notes/todo.txt")
+               (file "~/dropbox/emacs/org/template/todo.txt")
                :empty-lines 0)
                ;; "* TODO [#A] %?\n  %i\n %U"
                ;; :empty-lines 0)
               ("p" "private"
                entry (file+headline org-agenda-file-private "Capture")
-               (file "~/dropbox/emacs/org-notes/todo.txt")
+               (file "~/dropbox/emacs/org/template/todo.txt")
                :empty-lines 0)
                ;; "* TODO [#A] %?\n  %i\n %U"
                ;; :empty-lines 1)
               ("c" "Chrome"
                entry (file+headline org-agenda-file-note "Quick notes")
-               (file "~/dropbox/emacs/org-notes/todo.txt")
+               (file "~/dropbox/emacs/org/template/todo.txt")
                :empty-lines 0)
                ;; "* TODO [#C] %?\n %(guanghua/retrieve-chrome-current-tab-url)\n %i\n %U"
                ;; :empty-lines 1)
               ("l" "links"
                entry (file+headline org-agenda-file-note "Quick notes")
-               (file "~/dropbox/emacs/org-notes/todo.txt")
+               (file "~/dropbox/emacs/org/template/todo.txt")
                :empty-lines 0)
                ;; "* TODO [#C] %?\n  %i\n %a \n %U"
                ;; :empty-lines 1)
@@ -304,15 +304,15 @@ unwanted space when exporting org-mode to html."
                :empty-lines 1)
               ("r" "Weekly Review"
                entry (file+datetree org-agenda-file-review)
-               (file "~/dropbox/emacs/org-notes/tpl-review.txt")
+               (file "~/dropbox/emacs/org/template/tpl-review.txt")
                :empty-lines 1)
               ("s" "Project/Literature Summaries"
                entry (file+headline org-agenda-file-summary "Porject/Literature Summaries")
-               (file "~/dropbox/emacs/org-notes/tpl-paper.txt")
+               (file "~/dropbox/emacs/org/template/tpl-paper.txt")
                :empty-lines 1)
               ("b" "Blog Ideas"
                entry (file+headline org-agenda-file-blog "Blog Ideas")
-               (file "~/dropbox/emacs/org-notes/tpl-blog.txt")
+               (file "~/dropbox/emacs/org/template/tpl-blog.txt")
                :empty-lines 1)
               ;; "* TODO [#B] %?\n  %i\n %U"
               ;; :empty-lines 1)
@@ -519,7 +519,7 @@ holding contextual information."
 (defun guanghua-org/init-plain-org-wiki ()
   (use-package plain-org-wiki
     :init
-    (setq pow-directory "~/dropbox/emacs/org-notes")))
+    (setq pow-directory "~/dropbox/emacs/org")))
 
 (defun guanghua-org/init-worf ()
   (use-package worf

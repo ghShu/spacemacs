@@ -31,20 +31,20 @@
   "default deploy task"
   (interactive)
   (guanghua/octopress-rake "deploy")
-  (guanghua/octopress-qrsync "/Users/guanghui/4gamers.cn/guanghui.json")
+  (guanghua/octopress-qrsync "/Users/simon/4gamers.cn/simon.json")
   (message "Deploy site OK"))
 
 (defun guanghua/octopress-gen-deploy ()
   "generate website and deploy"
   (interactive)
   (guanghua/octopress-rake "gen_deploy")
-  (guanghua/octopress-qrsync "/Users/guanghui/4gamers.cn/guanghui.json")
+  (guanghua/octopress-qrsync "/Users/simon/4gamers.cn/simon.json")
   (message "Generate and Deploy OK"))
 
 (defun guanghua/octopress-upimg ()
   (interactive)
-  (guanghua/octopress-qrsync "/Users/guanghui/4gamers.cn/guanghui.json")
-  (message "Up Img to Qiniu"))
+  (guanghua/octopress-qrsync "/Users/simon/4gamers.cn/simon.json")
+  (message "Up Imgu"))
 
 (defun guanghua/directory-parent (directory)
   (let ((parent (file-name-directory (directory-file-name directory))))

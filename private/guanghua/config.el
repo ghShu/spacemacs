@@ -24,8 +24,8 @@
   "blog-admin files location")
 
 (setq-default
- org-agenda-dir "~/dropbox/emacs/org-notes/"
- deft-dir "~/dropbox/emacs/org-notes/"
+ org-agenda-dir "~/dropbox/emacs/org/"
+ deft-dir "~/dropbox/emacs/org/"
  blog-admin-dir "~/dropbox/GitHub/ghShu.github.io/org/_posts/"
  )
 
