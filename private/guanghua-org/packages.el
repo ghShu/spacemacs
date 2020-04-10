@@ -181,8 +181,8 @@
       ;; (add-hook 'org-after-todo-state-change-hook 'org-subtask-reset)
 
       (setq org-plantuml-jar-path
-            (expand-file-name "~/dropbox/.emacs.d/plantuml.jar"))
-      (setq org-ditaa-jar-path "~/dropbox/.emacs.d/ditaa.jar")
+            (expand-file-name "~/plantuml.jar"))
+      (setq org-ditaa-jar-path "~/ditaa.jar")
 
       ;; code block execution
       (require 'ob-python)
@@ -239,8 +239,8 @@ unwanted space when exporting org-mode to html."
       (load-library "find-lisp")
       (setq org-agenda-files (append
             (find-lisp-find-files "~/dropbox/emacs/" "\.org$")
-            (find-lisp-find-files "~/dropbox/git/io/algorithm" "\.org$")
-            (find-lisp-find-files "~/dropbox/git/io/algorithm" "\.org$")))
+            (find-lisp-find-files "~/dropbox/git/io/algorithm/" "\.org$")
+            (find-lisp-find-files "~/dropbox/git/gtd/" "\.org$")))
 
       ;; (setq org-agenda-gtd-files
             ;; (find-lisp-find-files "~/dropbox/emacs/" "\.org$"))
