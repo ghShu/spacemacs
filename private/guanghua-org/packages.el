@@ -184,10 +184,10 @@
             (expand-file-name "~/plantuml.jar"))
       (setq org-ditaa-jar-path "~/ditaa.jar")
 
-      ;; code block execution
-      (require 'ob-python)
-      (require 'ob-shell)
-      (require 'org-tempo)
+      ;; code block execution
+      (require 'ob-python)
+      (require 'ob-shell)
+      (require 'org-tempo)
       (org-babel-do-load-languages
        'org-babel-load-languages
        '((perl . t)
