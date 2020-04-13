@@ -15,7 +15,7 @@
   '(
     ;; org
     (org :location built-in)
-    ;; org-mac-link
+    org-mac-link
     ;; org-octopress
     org-pomodoro
     deft
@@ -187,11 +187,15 @@
       ;; code block execution
       (require 'ob-python)
       (require 'ob-shell)
+      ;; (require 'ob-go)
+      (require 'ob-java)
       (require 'org-tempo)
       (org-babel-do-load-languages
        'org-babel-load-languages
        '((perl . t)
          (ruby . t)
+         ;; (go . t)
+         (java . t)
          (dot . t)
          (js . t)
          (latex .t)

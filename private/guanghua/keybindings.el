@@ -25,3 +25,5 @@
 ;; Keybindings for OrgMode
 (global-set-key (kbd "<f5>") 'guanghua-misc/copy-id-to-clipboard)
 (global-set-key (kbd "<f6>") 'org-capture)
+(global-set-key (kbd "<home>") 'move-beginning-of-line)
+(global-set-key (kbd "<end>") 'move-end-of-line)
