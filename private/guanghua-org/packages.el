@@ -47,6 +47,7 @@
 
       ;; add path for org-mac-link
       (push (expand-file-name "~/dropbox/git/org-mode/contrib/lisp/") load-path)
+      (push (expand-file-name "/usr/local/go/bin/") load-path)
       (require 'org-mac-link)
 
       (require 'org-compat)
@@ -190,6 +191,7 @@
       ;; (require 'ob-go)
       (require 'ob-java)
       (require 'org-tempo)
+      (require 'ox-md nil t)
       (org-babel-do-load-languages
        'org-babel-load-languages
        '((perl . t)
@@ -206,7 +208,6 @@
          (ditaa . t)))
 
 
-      (require 'ox-md nil t)
       ;; copy from chinese layer
       (defadvice org-html-paragraph (before org-html-paragraph-advice
                                             (paragraph contents info) activate)
@@ -334,7 +335,7 @@ unwanted space when exporting org-mode to html."
               ("b" "Blog" tags-todo "BLOG")
               ("p" . "Project Tag")
               ("pw" tags-todo "PROJECT+WORK+CATEGORY=\"ML\"")
-              ("pl" tags-todo "PROJECT+DREAM+CATEGORY=\"CloudComputing\"")
+              ("pl" tags-todo "PROJECT+DREAM+CATEGORY=\"CloudEssential\"")
               ("r" "Todo Weekly Review"
                ((stuck "") ;; review stuck projects as designated by org-stuck-projects
                 (tags-todo "PROJECT") ;; review all projects (assuming you use todo keywords to designate projects)
@@ -385,8 +386,8 @@ unwanted space when exporting org-mode to html."
 
 
 
-      (add-hook 'org-after-todo-statistics-hook 'zilong/org-summary-todo)
-      ;; used by zilong/org-clock-sum-today-by-tags
+      (add-hook 'org-after-todo-statistics-hook 'guanghua/org-summary-todo)
+      ;; used by guanghua/org-clock-sum-today-by-tags
 
       (define-key org-mode-map (kbd "s-p") 'org-priority)
       (spacemacs/set-leader-keys-for-major-mode 'org-mode
