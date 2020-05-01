@@ -226,6 +226,7 @@ unwanted space when exporting org-mode to html."
       (setq org-agenda-file-note (expand-file-name "notes.org" org-agenda-dir))
       (setq org-agenda-file-gtd (expand-file-name "gtd.org" org-agenda-dir))
       (setq org-agenda-file-work (expand-file-name "work.org" org-agenda-dir))
+      (setq org-agenda-file-daily (expand-file-name "daily.org" org-agenda-dir))
       (setq org-agenda-file-private (expand-file-name "private.org" org-agenda-dir))
       (setq org-agenda-file-journal (expand-file-name "journal.org" org-agenda-dir))
       (setq org-agenda-file-review (expand-file-name "review.org" org-agenda-dir))
@@ -307,6 +308,10 @@ unwanted space when exporting org-mode to html."
                entry (file+datetree org-agenda-file-journal)
                "* %?"
                :empty-lines 1)
+              ("d" "Daily Tasks"
+               entry (file+datetree org-agenda-file-daily)
+               (file "~/dropbox/emacs/org/template/tpl-daily.txt")
+               :empty-lines 1)
               ("r" "Weekly Review"
                entry (file+datetree org-agenda-file-review)
                (file "~/dropbox/emacs/org/template/tpl-review.txt")
@@ -336,6 +341,7 @@ unwanted space when exporting org-mode to html."
               ("p" . "Project Tag")
               ("pw" tags-todo "PROJECT+WORK+CATEGORY=\"ML\"")
               ("pl" tags-todo "PROJECT+DREAM+CATEGORY=\"CloudEssential\"")
+              ("d" "Daily" tags-todo "DAILY")
               ("r" "Todo Weekly Review"
                ((stuck "") ;; review stuck projects as designated by org-stuck-projects
                 (tags-todo "PROJECT") ;; review all projects (assuming you use todo keywords to designate projects)
