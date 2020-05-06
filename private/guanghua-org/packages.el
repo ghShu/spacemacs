@@ -17,7 +17,6 @@
     (org :location built-in)
     org-mac-link
     ;; org-octopress
-    org-pomodoro
     deft
     ;; org-tree-slide
     ;; ox-reveal
@@ -227,6 +226,7 @@ unwanted space when exporting org-mode to html."
       (setq org-agenda-file-gtd (expand-file-name "gtd.org" org-agenda-dir))
       (setq org-agenda-file-work (expand-file-name "work.org" org-agenda-dir))
       (setq org-agenda-file-daily (expand-file-name "daily.org" org-agenda-dir))
+      (setq org-agenda-file-meeting (expand-file-name "meeting.org" org-agenda-dir))
       (setq org-agenda-file-private (expand-file-name "private.org" org-agenda-dir))
       (setq org-agenda-file-journal (expand-file-name "journal.org" org-agenda-dir))
       (setq org-agenda-file-review (expand-file-name "review.org" org-agenda-dir))
@@ -307,23 +307,27 @@ unwanted space when exporting org-mode to html."
               ("j" "Journal Entry"
                entry (file+datetree org-agenda-file-journal)
                "* %?"
-               :empty-lines 1)
+               :empty-lines 0)
               ("d" "Daily Tasks"
                entry (file+datetree org-agenda-file-daily)
                (file "~/dropbox/emacs/org/template/tpl-daily.txt")
-               :empty-lines 1)
+               :empty-lines 0)
+              ("m" "Meeting Notes"
+               entry (file+datetree org-agenda-file-meeting)
+               (file "~/dropbox/emacs/org/template/tpl-meeting.txt")
+               :empty-lines 0)
               ("r" "Weekly Review"
                entry (file+datetree org-agenda-file-review)
                (file "~/dropbox/emacs/org/template/tpl-review.txt")
-               :empty-lines 1)
+               :empty-lines 0)
               ("s" "Project/Literature Summaries"
                entry (file+headline org-agenda-file-summary "Porject/Literature Summaries")
                (file "~/dropbox/emacs/org/template/tpl-paper.txt")
-               :empty-lines 1)
+               :empty-lines 0)
               ("b" "Blog Ideas"
                entry (file+headline org-agenda-file-blog "Blog Ideas")
                (file "~/dropbox/emacs/org/template/tpl-blog.txt")
-               :empty-lines 1)
+               :empty-lines 0)
               ;; "* TODO [#B] %?\n  %i\n %U"
               ;; :empty-lines 1)
               )
@@ -342,6 +346,7 @@ unwanted space when exporting org-mode to html."
               ("pw" tags-todo "PROJECT+WORK+CATEGORY=\"ML\"")
               ("pl" tags-todo "PROJECT+DREAM+CATEGORY=\"CloudEssential\"")
               ("d" "Daily" tags-todo "DAILY")
+              ("m" "Meeting Notes" tags-todo "Meeting")
               ("r" "Todo Weekly Review"
                ((stuck "") ;; review stuck projects as designated by org-stuck-projects
                 (tags-todo "PROJECT") ;; review all projects (assuming you use todo keywords to designate projects)
