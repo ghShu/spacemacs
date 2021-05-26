@@ -1,6 +1,6 @@
 ;;; packages.el --- deft Layer packages File for Spacemacs
 ;;
-;; Copyright (c) 2012-2018 Sylvain Benner & Contributors
+;; Copyright (c) 2012-2021 Sylvain Benner & Contributors
 ;;
 ;; Author: Sylvain Benner <sylvain.benner@gmail.com>
 ;;         Bruno Morais <brunosmmm@gmail.com>
@@ -8,7 +8,19 @@
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
-;;; License: GPLv3
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 (setq deft-packages
       '(
@@ -23,7 +35,7 @@
     (progn
       (spacemacs/declare-prefix-for-mode 'deft-mode "mz" "zetteldeft")
       (spacemacs/declare-prefix-for-mode 'org-mode "mz" "zetteldeft")
-      (spacemacs/declare-prefix "anz" "zetteldeft")
+      (spacemacs/declare-prefix "ardz" "zetteldeft")
       ;; zetteldeft actions in deft mode
       (spacemacs/set-leader-keys-for-major-mode 'deft-mode
         "zT" 'zetteldeft-tag-buffer
@@ -46,10 +58,10 @@
       ;; new zetteldeft file under capture
       (spacemacs/set-leader-keys "Cz" 'zetteldeft-new-file)
       ;; actions under applications/deft/zetteldeft
-      (spacemacs/set-leader-keys "anzn" 'zetteldeft-new-file)
-      (spacemacs/set-leader-keys "anzT" 'zetteldeft-tag-buffer)
-      (spacemacs/set-leader-keys "anzs" 'zetteldeft-search-at-point)
-      (spacemacs/set-leader-keys "anzo" 'zetteldeft-find-file)
+      (spacemacs/set-leader-keys "ardzn" 'zetteldeft-new-file)
+      (spacemacs/set-leader-keys "ardzT" 'zetteldeft-tag-buffer)
+      (spacemacs/set-leader-keys "ardzs" 'zetteldeft-search-at-point)
+      (spacemacs/set-leader-keys "ardzo" 'zetteldeft-find-file)
     )))
 
 (defun deft/init-deft ()
@@ -64,9 +76,9 @@
       ;; in applications prefix, NOTE: backward incompatible keybindings
       (if deft-zetteldeft
           (progn
-            (spacemacs/declare-prefix "an" "deft")
-            (spacemacs/set-leader-keys "ann" 'spacemacs/deft))
-        (spacemacs/set-leader-keys "an" 'spacemacs/deft))
+            (spacemacs/declare-prefix "ard" "deft")
+            (spacemacs/set-leader-keys "ardn" 'spacemacs/deft))
+        (spacemacs/set-leader-keys "ard" 'spacemacs/deft))
       ;; put in capture prefix
       (spacemacs/set-leader-keys "Cd" 'deft-new-file)
 

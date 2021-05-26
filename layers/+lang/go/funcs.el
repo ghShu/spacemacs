@@ -1,55 +1,61 @@
 ;;; funcs.el --- Go Layer functions File for Spacemacs
 ;;
-;; Copyright (c) 2012-2018 Sylvain Benner & Contributors
+;; Copyright (c) 2012-2021 Sylvain Benner & Contributors
 ;;
 ;; Author: Sylvain Benner <sylvain.benner@gmail.com>
 ;; URL: https://github.com/syl20bnr/spacemacs
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
-;;; License: GPLv3
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(defun spacemacs//go-backend ()
-  "Returns selected backend."
-  (if go-backend
-      go-backend
-    (cond
-     ((configuration-layer/layer-used-p 'lsp) 'lsp)
-     (t 'go-mode))))
 
 (defun spacemacs//go-setup-backend ()
   "Conditionally setup go backend"
-  (pcase (spacemacs//go-backend)
-    ('lsp (spacemacs//go-setup-backend-lsp))))
+  (when (eq go-backend 'lsp)
+    (spacemacs//go-setup-backend-lsp)))
 
 (defun spacemacs//go-setup-company ()
   "Conditionally setup go company based on backend"
-  (pcase (spacemacs//go-backend)
-    ('go-mode (spacemacs//go-setup-company-go))))
+  (pcase go-backend
+    ('go-mode (spacemacs|add-company-backends
+                :backends company-go
+                :modes go-mode
+                :variables company-go-show-annotation t
+                :append-hooks nil
+                :call-hooks t))
+    ('lsp (spacemacs|add-company-backends
+            :backends company-capf
+            :modes go-mode))))
 
 (defun spacemacs//go-setup-eldoc ()
   "Conditionally setup go eldoc based on backend"
-  (pcase (spacemacs//go-backend)
-    ('go-mode (go-eldoc-setup))))
-
+  (when (eq go-backend 'go-mode)
+    (go-eldoc-setup)))
 
 (defun spacemacs//go-setup-dap ()
   "Conditionally setup go DAP integration."
   ;; currently DAP is only available using LSP
-  (pcase (spacemacs//go-backend)
-    (`lsp (spacemacs//go-setup-lsp-dap))))
+  (when (eq go-backend 'lsp)
+    (require 'dap-go)
+    (dap-go-setup)))
 
-
-;; go-mode
-
-(defun spacemacs//go-setup-company-go ()
-  (spacemacs|add-company-backends
-    :backends company-go
-    :modes go-mode
-    :variables company-go-show-annotation t
-    :append-hooks nil
-    :call-hooks t)
-  (company-mode))
+(defun spacemacs//go-setup-format ()
+  "Conditionally setup format on save."
+  (if go-format-before-save
+      (add-hook 'before-save-hook 'gofmt-before-save)
+    (remove-hook 'before-save-hook 'gofmt-before-save)))
 
 
 ;; lsp
@@ -58,18 +64,13 @@
   "Setup lsp backend"
   (if (configuration-layer/layer-used-p 'lsp)
       (progn
-        ;; without setting lsp-diagnostic-package to :none
+        ;; without setting lsp-diagnostics-provider to :none
         ;; golangci-lint errors won't be reported
         (when go-use-golangci-lint
-          (message "[go] Setting lsp-diagnostic-package :none to enable golangci-lint support.")
-          (setq-local lsp-diagnostic-package :none))
+          (message "[go] Setting lsp-diagnostics-provider :none to enable golangci-lint support.")
+          (setq-local lsp-diagnostics-provider :none))
         (lsp))
     (message "`lsp' layer is not installed, please add `lsp' layer to your dotfile.")))
-
-(defun spacemacs//go-setup-lsp-dap ()
-  "Setup DAP integration."
-  (require 'dap-go)
-  (dap-go-setup))
 
 
 ;; flycheck
@@ -79,20 +80,32 @@
   (setq flycheck-disabled-checkers '(go-gofmt
                                      go-golint
                                      go-vet
-                                     go-build
-                                     go-test
+                                     ;; go-build
+                                     ;; go-test
                                      go-errcheck
                                      go-staticcheck
-                                     go-unconvert
-                                     ))
-  (flycheck-golangci-lint-setup))
+                                     go-unconvert))
+  (flycheck-golangci-lint-setup)
+
+  ;; Make sure to only run golangci after go-build
+  ;; to ensure we show at least basic errors in the buffer
+  ;; when golangci fails. Make also sure to run go-test if possible.
+  ;; See #13580 for details
+  (flycheck-add-next-checker 'go-build '(warning . golangci-lint) t)
+  (flycheck-add-next-checker 'go-test '(warning . golangci-lint) t)
+
+  ;; Set basic checkers explicitly as flycheck will
+  ;; select the better golangci-lint automatically.
+  ;; However if it fails we require these as fallbacks.
+  (cond ((flycheck-may-use-checker 'go-test) (flycheck-select-checker 'go-test))
+        ((flycheck-may-use-checker 'go-build) (flycheck-select-checker 'go-build))))
 
 
 ;; run
 
 (defun spacemacs/go-run-tests (args)
   (interactive)
-  (compilation-start (concat "go test " (when go-test-verbose "-v ") args " " go-use-test-args)
+  (compilation-start (concat go-test-command " " (when go-test-verbose "-v ") args " " go-use-test-args)
                      nil (lambda (n) go-test-buffer-name) nil))
 
 (defun spacemacs/go-run-package-tests ()
@@ -107,6 +120,7 @@
   (interactive)
   (if (string-match "_test\\.go" buffer-file-name)
       (save-excursion
+        (move-end-of-line nil)
         (re-search-backward "^func[ ]+\\(([[:alnum:]]*?[ ]?[*]?\\([[:alnum:]]+\\))[ ]+\\)?\\(Test[[:alnum:]_]+\\)(.*)")
         (spacemacs/go-run-tests
          (cond (go-use-testify-for-testing (concat "-run='Test" (match-string-no-properties 2) "' -testify.m='" (match-string-no-properties 3) "'"))
@@ -130,7 +144,7 @@
 (defun spacemacs/go-run-main ()
   (interactive)
   (shell-command
-   (format "go run %s %s"
+   (format (concat go-run-command " %s %s")
            (shell-quote-argument (or (file-remote-p (buffer-file-name (buffer-base-buffer)) 'localname)
                                      (buffer-file-name (buffer-base-buffer))))
            go-run-args)))

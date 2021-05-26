@@ -1,13 +1,25 @@
 ;;; funcs.el --- Spacemacs Defaults Layer functions File
 ;;
-;; Copyright (c) 2012-2018 Sylvain Benner & Contributors
+;; Copyright (c) 2012-2021 Sylvain Benner & Contributors
 ;;
 ;; Author: Sylvain Benner <sylvain.benner@gmail.com>
 ;; URL: https://github.com/syl20bnr/spacemacs
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
-;;; License: GPLv3
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 (require 'cl-lib)
 
@@ -95,6 +107,17 @@ automatically applied to."
   :group 'spacemacs
   :type '(list symbol))
 
+(defun spacemacs/custom-newline (pos)
+  "Make `RET' in a Custom-mode search box trigger that field's action, rather
+than enter an actual newline, which is useless and unexpected in a search box.
+If not in such a search box, fall back on `Custom-newline'."
+  (interactive "d")
+  (let ((w (widget-at)))
+    (if (and w
+             (eq 'editable-field (widget-type w))
+             (string-prefix-p "Search" (widget-get w :help-echo)))
+        (funcall (widget-get w :action) w)
+      (Custom-newline pos))))
 
 ;; ido-mode remaps some commands to ido counterparts.  We want default Emacs key
 ;; bindings (those under C-x) to use ido, but we want to use the original
@@ -109,6 +132,14 @@ automatically applied to."
 (defalias 'spacemacs/insert-file 'insert-file)
 (defalias 'spacemacs/display-buffer-other-frame 'display-buffer-other-frame)
 (defalias 'spacemacs/find-file-and-replace-buffer 'find-alternate-file)
+
+(defun spacemacs/dired-remove-evil-mc-gr-which-key-entry ()
+  ;; Remove inherited bindings from evil-mc
+  ;; do this after the config to make sure the keymap is available
+  (with-eval-after-load 'dired
+    (which-key-add-keymap-based-replacements dired-mode-map
+      "<normal-state> g r" nil
+      "<visual-state> g r" nil)))
 
 (defun spacemacs/indent-region-or-buffer ()
   "Indent a region if selected, otherwise the whole buffer."
@@ -138,6 +169,22 @@ automatically applied to."
         (untabify (point-min) (point-max))
         (indent-region (point-min) (point-max))
         (whitespace-cleanup)))))
+
+(defun spacemacs//trailing-whitespace ()
+  (setq show-trailing-whitespace dotspacemacs-show-trailing-whitespace))
+
+(defun spacemacs//set-whitespace-style-for-diff ()
+  "Whitespace configuration for `diff-mode'"
+  (setq-local whitespace-style '(face
+                                 tabs
+                                 tab-mark
+                                 spaces
+                                 space-mark
+                                 trailing
+                                 indentation::space
+                                 indentation::tab
+                                 newline
+                                 newline-mark)))
 
 ;; from https://gist.github.com/3402786
 (defun spacemacs/toggle-maximize-buffer ()
@@ -175,8 +222,7 @@ automatically applied to."
 (defun spacemacs/useful-buffer-p (buffer)
   "Determines if a buffer is useful."
   (let ((buf-name (buffer-name buffer)))
-    (or (with-current-buffer buffer
-          (derived-mode-p 'comint-mode))
+    (or (provided-mode-derived-p (buffer-local-value 'major-mode buffer) 'comint-mode)
         (cl-loop for useful-regexp in spacemacs-useful-buffers-regexp
                  thereis (string-match-p useful-regexp buf-name))
         (cl-loop for useless-regexp in spacemacs-useless-buffers-regexp
@@ -247,50 +293,86 @@ Dedicated (locked) windows are left untouched."
   (interactive "p")
   (spacemacs/rotate-windows-forward (* -1 count)))
 
-(defun spacemacs/move-buffer-to-window (windownum follow-focus-p)
-  "Moves a buffer to a window, using the spacemacs numbering. follow-focus-p
-controls whether focus moves to new window (with buffer), or stays on current"
-  (interactive)
-  (let ((b (current-buffer))
-        (w1 (selected-window))
-        (w2 (winum-get-window-by-number windownum)))
-    (unless (eq w1 w2)
-      (set-window-buffer w2 b)
-      (switch-to-prev-buffer)
-      (unrecord-window-buffer w1 b)))
-  (when follow-focus-p (select-window (winum-get-window-by-number windownum))))
 
-(defun spacemacs/swap-buffers-to-window (windownum follow-focus-p)
-  "Swaps visible buffers between active window and selected window.
-follow-focus-p controls whether focus moves to new window (with buffer), or
-stays on current"
-  (interactive)
-  (let* ((b1 (current-buffer))
-         (w1 (selected-window))
-         (w2 (winum-get-window-by-number windownum))
-         (b2 (window-buffer w2)))
-    (unless (eq w1 w2)
-      (set-window-buffer w1 b2)
-      (set-window-buffer w2 b1)
-      (unrecord-window-buffer w1 b1)
-      (unrecord-window-buffer w2 b2)))
-  (when follow-focus-p (winum-select-window-by-number windownum)))
+(if (configuration-layer/package-used-p 'winum)
+    (progn
+      (defun spacemacs/move-buffer-to-window (windownum follow-focus-p)
+        "Moves a buffer to a window, using the spacemacs numbering. follow-focus-p
+  controls whether focus moves to new window (with buffer), or stays on current"
+        (interactive)
+        (if (> windownum (length (window-list-1 nil nil t)))
+            (message "No window numbered %s" windownum)
+          (let ((b (current-buffer))
+                (w1 (selected-window))
+                (w2 (winum-get-window-by-number windownum)))
+            (unless (eq w1 w2)
+              (set-window-buffer w2 b)
+              (switch-to-prev-buffer)
+              (unrecord-window-buffer w1 b))
+            (when follow-focus-p
+              (select-window (winum-get-window-by-number windownum))))))
 
+      (defun spacemacs/swap-buffers-to-window (windownum follow-focus-p)
+        "Swaps visible buffers between active window and selected window.
+  follow-focus-p controls whether focus moves to new window (with buffer), or
+  stays on current"
+        (interactive)
+        (if (> windownum (length (window-list-1 nil nil t)))
+            (message "No window numbered %s" windownum)
+          (let* ((b1 (current-buffer))
+                 (w1 (selected-window))
+                 (w2 (winum-get-window-by-number windownum))
+                 (b2 (window-buffer w2)))
+            (unless (eq w1 w2)
+              (set-window-buffer w1 b2)
+              (set-window-buffer w2 b1)
+              (unrecord-window-buffer w1 b1)
+              (unrecord-window-buffer w2 b2)))
+          (when follow-focus-p (winum-select-window-by-number windownum)))))
+  ;; when the winum package isn't used
+  (defun spacemacs//message-winum-package-required ()
+    (interactive)
+    (message (concat "This command requires the winum package," "\n"
+                     "winum is part of the spacemacs-navigation layer."))))
+
+;; define and evaluate numbered functions:
+;; spacemacs/winum-select-window-0 to 9
+(dotimes (i 10)
+  (eval `(defun ,(intern (format "spacemacs/winum-select-window-%s" i)) (&optional arg)
+           ,(concat (format "Select window %i\n" i)
+                    "Or if the winum package isn't used:\n"
+                    "For example in the spacemacs-base distribution."
+                    "Show a message stating that the winum package,"
+                    "is part of the spacemacs-navigation layer.\n")
+           (interactive "P")
+           (if (configuration-layer/package-used-p 'winum)
+               (funcall ',(intern (format "winum-select-window-%s" i)) arg)
+             (spacemacs//message-winum-package-required)))))
+
+;; define and evaluate three numbered functions:
+;; buffer-to-window-1 to 9
+;; move-buffer-window-no-follow-1 to 9
+;; swap-buffer-window-no-follow-1 to 9
 (dotimes (i 9)
   (let ((n (+ i 1)))
     (eval `(defun ,(intern (format "buffer-to-window-%s" n)) (&optional arg)
              ,(format "Move buffer to the window with number %i." n)
              (interactive "P")
-             (if arg
-                 (spacemacs/swap-buffers-to-window ,n t)
-               (spacemacs/move-buffer-to-window ,n t))))
+             (if (configuration-layer/package-used-p 'winum)
+                 (if arg
+                     (spacemacs/swap-buffers-to-window ,n t)
+                   (spacemacs/move-buffer-to-window ,n t))
+               (spacemacs//message-winum-package-required))))
     (eval `(defun ,(intern (format "move-buffer-window-no-follow-%s" n)) ()
              (interactive)
-             (spacemacs/move-buffer-to-window ,n nil)))
+             (if (configuration-layer/package-used-p 'winum)
+                 (spacemacs/move-buffer-to-window ,n nil)
+               (spacemacs//message-winum-package-required))))
     (eval `(defun ,(intern (format "swap-buffer-window-no-follow-%s" n)) ()
              (interactive)
-             (spacemacs/swap-buffers-to-window ,n nil)))
-    ))
+             (if (configuration-layer/package-used-p 'winum)
+                 (spacemacs/swap-buffers-to-window ,n nil)
+               (spacemacs//message-winum-package-required))))))
 
 (defun spacemacs/rename-file (filename &optional new-filename)
   "Rename FILENAME to NEW-FILENAME.
@@ -339,7 +421,82 @@ projectile cache and updates recentf list."
                short-name
                (file-name-nondirectory new-filename)))))
 
-;; from magnars
+;; originally from magnars
+(defun spacemacs/rename-buffer-visiting-a-file (&optional arg)
+  (let* ((old-short-name (buffer-name))
+         (old-filename (buffer-file-name))
+         (old-dir (file-name-directory old-filename))
+         (new-name (read-file-name "New name: " (if arg old-dir old-filename)))
+         (new-dir (file-name-directory new-name))
+         (new-short-name (file-name-nondirectory new-name))
+         (file-moved-p (not (string-equal new-dir old-dir)))
+         (file-renamed-p (not (string-equal new-short-name old-short-name))))
+    (cond ((get-buffer new-name)
+           (error "A buffer named '%s' already exists!" new-name))
+          ((string-equal new-name old-filename)
+           (spacemacs/show-hide-helm-or-ivy-prompt-msg
+            "Rename failed! Same new and old name" 1.5)
+           (spacemacs/rename-current-buffer-file))
+          (t
+           (let ((old-directory (file-name-directory new-name)))
+             (when (and (not (file-exists-p old-directory))
+                        (yes-or-no-p
+                         (format "Create directory '%s'?" old-directory)))
+               (make-directory old-directory t)))
+           (rename-file old-filename new-name 1)
+           (rename-buffer new-name)
+           (set-visited-file-name new-name)
+           (set-buffer-modified-p nil)
+           (when (fboundp 'recentf-add-file)
+             (recentf-add-file new-name)
+             (recentf-remove-if-non-kept old-filename))
+           (when (and (configuration-layer/package-used-p 'projectile)
+                      (projectile-project-p))
+             (call-interactively #'projectile-invalidate-cache))
+           (message (cond ((and file-moved-p file-renamed-p)
+                           (concat "File Moved & Renamed\n"
+                                   "From: " old-filename "\n"
+                                   "To:   " new-name))
+                          (file-moved-p
+                           (concat "File Moved\n"
+                                   "From: " old-filename "\n"
+                                   "To:   " new-name))
+                          (file-renamed-p
+                           (concat "File Renamed\n"
+                                   "From: " old-short-name "\n"
+                                   "To:   " new-short-name))))))))
+
+(defun spacemacs/rename-buffer-or-save-new-file ()
+  (let ((old-short-name (buffer-name))
+        key)
+    (while (not (memq key '(?s ?r)))
+      (setq key (read-key (propertize
+                           (format
+                            (concat "Buffer '%s' is not visiting a file: "
+                                    "[s]ave to file or [r]ename buffer?")
+                            old-short-name)
+                           'face 'minibuffer-prompt)))
+      (cond ((eq key ?s)            ; save to file
+             ;; this allows for saving a new empty (unmodified) buffer
+             (unless (buffer-modified-p) (set-buffer-modified-p t))
+             (save-buffer))
+            ((eq key ?r)            ; rename buffer
+             (let ((new-buffer-name (read-string "New buffer name: ")))
+               (while (get-buffer new-buffer-name)
+                 ;; ask to rename again, if the new buffer name exists
+                 (if (yes-or-no-p
+                      (format (concat "A buffer named '%s' already exists: "
+                                      "Rename again?")
+                              new-buffer-name))
+                     (setq new-buffer-name (read-string "New buffer name: "))
+                   (keyboard-quit)))
+               (rename-buffer new-buffer-name)
+               (message (concat "Buffer Renamed\n"
+                                "From: " old-short-name "\n"
+                                "To:   " new-buffer-name))))
+            ;; ?\a = C-g, ?\e = Esc and C-[
+            ((memq key '(?\a ?\e)) (keyboard-quit))))))
+
 (defun spacemacs/rename-current-buffer-file (&optional arg)
   "Rename the current buffer and the file it is visiting.
 If the buffer isn't visiting a file, ask if it should
@@ -348,79 +505,10 @@ be saved to a file, or just renamed.
 If called without a prefix argument, the prompt is
 initialized with the current directory instead of filename."
   (interactive "P")
-  (let* ((old-short-name (buffer-name))
-         (old-filename (buffer-file-name)))
-    (if (and old-filename (file-exists-p old-filename))
-        ;; the buffer is visiting a file
-        (let* ((old-dir (file-name-directory old-filename))
-               (new-name (read-file-name "New name: " (if arg old-dir old-filename)))
-               (new-dir (file-name-directory new-name))
-               (new-short-name (file-name-nondirectory new-name))
-               (file-moved-p (not (string-equal new-dir old-dir)))
-               (file-renamed-p (not (string-equal new-short-name old-short-name))))
-          (cond ((get-buffer new-name)
-                 (error "A buffer named '%s' already exists!" new-name))
-                ((string-equal new-name old-filename)
-                 (spacemacs/show-hide-helm-or-ivy-prompt-msg
-                  "Rename failed! Same new and old name" 1.5)
-                 (spacemacs/rename-current-buffer-file))
-                (t
-                 (let ((old-directory (file-name-directory new-name)))
-                   (when (and (not (file-exists-p old-directory))
-                              (yes-or-no-p
-                               (format "Create directory '%s'?" old-directory)))
-                     (make-directory old-directory t)))
-                 (rename-file old-filename new-name 1)
-                 (rename-buffer new-name)
-                 (set-visited-file-name new-name)
-                 (set-buffer-modified-p nil)
-                 (when (fboundp 'recentf-add-file)
-                   (recentf-add-file new-name)
-                   (recentf-remove-if-non-kept old-filename))
-                 (when (and (configuration-layer/package-used-p 'projectile)
-                            (projectile-project-p))
-                   (call-interactively #'projectile-invalidate-cache))
-                 (message (cond ((and file-moved-p file-renamed-p)
-                                 (concat "File Moved & Renamed\n"
-                                         "From: " old-filename "\n"
-                                         "To:   " new-name))
-                                (file-moved-p
-                                 (concat "File Moved\n"
-                                         "From: " old-filename "\n"
-                                         "To:   " new-name))
-                                (file-renamed-p
-                                 (concat "File Renamed\n"
-                                         "From: " old-short-name "\n"
-                                         "To:   " new-short-name)))))))
-      ;; the buffer is not visiting a file
-      (let ((key))
-        (while (not (memq key '(?s ?r)))
-          (setq key (read-key (propertize
-                               (format
-                                (concat "Buffer '%s' is not visiting a file: "
-                                        "[s]ave to file or [r]ename buffer?")
-                                old-short-name)
-                               'face 'minibuffer-prompt)))
-          (cond ((eq key ?s)            ; save to file
-                 ;; this allows for saving a new empty (unmodified) buffer
-                 (unless (buffer-modified-p) (set-buffer-modified-p t))
-                 (save-buffer))
-                ((eq key ?r)            ; rename buffer
-                 (let ((new-buffer-name (read-string "New buffer name: ")))
-                   (while (get-buffer new-buffer-name)
-                     ;; ask to rename again, if the new buffer name exists
-                     (if (yes-or-no-p
-                          (format (concat "A buffer named '%s' already exists: "
-                                          "Rename again?")
-                                  new-buffer-name))
-                         (setq new-buffer-name (read-string "New buffer name: "))
-                       (keyboard-quit)))
-                   (rename-buffer new-buffer-name)
-                   (message (concat "Buffer Renamed\n"
-                                    "From: " old-short-name "\n"
-                                    "To:   " new-buffer-name))))
-                ;; ?\a = C-g, ?\e = Esc and C-[
-                ((memq key '(?\a ?\e)) (keyboard-quit))))))))
+  (let ((file (buffer-file-name)))
+    (if (and file (file-exists-p file))
+        (spacemacs/rename-buffer-visiting-a-file arg)
+      (spacemacs/rename-buffer-or-save-new-file))))
 
 (defun spacemacs/show-hide-helm-or-ivy-prompt-msg (msg sec)
   "Show a MSG at the helm or ivy prompt for SEC.
@@ -690,6 +778,12 @@ ones created by `magit' and `dired'."
         (message "%s" file-name))
     (message "WARNING: Current buffer is not attached to a file!")))
 
+(defun spacemacs/copy-buffer-name ()
+  "Copy and show the name of the current buffer."
+  (interactive)
+  (kill-new (buffer-name))
+  (message "%s" (buffer-name)))
+
 (defun spacemacs/copy-file-name-base ()
   "Copy and show the file name without its final extension of the current
 buffer."
@@ -730,6 +824,11 @@ variable."
   "Edit the `user-init-file', in the current window."
   (interactive)
   (find-file-existing user-init-file))
+
+(defun spacemacs/find-user-early-init-file ()
+  "Edit the `early-init-file', in the current window."
+  (interactive)
+  (find-file-existing early-init-file))
 
 (defun spacemacs/find-dotfile ()
   "Edit the `dotfile', in the current window."
@@ -1079,12 +1178,12 @@ toggling fullscreen."
   (cond
    ((eq window-system 'x)
     (set-frame-parameter nil 'fullscreen
-                         (when (not (frame-parameter nil 'fullscreen))
+                         (unless (frame-parameter nil 'fullscreen)
                            'fullboth)))
    ((eq window-system 'mac)
     (set-frame-parameter
      nil 'fullscreen
-     (when (not (frame-parameter nil 'fullscreen)) 'fullscreen)))))
+     (unless (frame-parameter nil 'fullscreen)) 'fullscreen))))
 
 (defun spacemacs/toggle-frame-fullscreen-non-native ()
   "Toggle full screen using the `fullboth' frame parameter.
@@ -1339,6 +1438,30 @@ using a visual block/rectangle selection."
   (interactive)
   (spacemacs/sort-lines-by-column -1))
 
+;; Show scroll bar when using the mouse wheel
+(defun spacemacs//scroll-bar-hide ()
+  " Hide the scroll bar."
+  (scroll-bar-mode -1))
+
+(defun spacemacs//scroll-bar-show-delayed-hide (&rest _ignore)
+  "Show the scroll bar for a couple of seconds, before hiding it.
+
+This can be used to temporarily show the scroll bar when mouse wheel scrolling.
+(advice-add 'mwheel-scroll :after #'spacemacs//scroll-bar-show-delayed-hide)
+
+The advice can be removed with:
+(advice-remove 'mwheel-scroll #'spacemacs//scroll-bar-show-delayed-hide)"
+  (scroll-bar-mode 1)
+  (run-with-idle-timer
+   (if (numberp dotspacemacs-scroll-bar-while-scrolling)
+       dotspacemacs-scroll-bar-while-scrolling
+     3)
+   nil
+   #'spacemacs//scroll-bar-hide))
+(when (and (fboundp 'scroll-bar-mode)
+           dotspacemacs-scroll-bar-while-scrolling)
+  (advice-add 'mwheel-scroll :after #'spacemacs//scroll-bar-show-delayed-hide))
+
 ;; BEGIN linum mouse helpers
 
 (defvar spacemacs-linum-mdown-line nil
@@ -1352,8 +1475,8 @@ using a visual block/rectangle selection."
           (line-move-visual t))
       (goto-char (window-start))
       (next-line (1- click-y))
-      (1+ (line-number-at-pos))
-      )))
+      (1+ (line-number-at-pos)))))
+
 
 (defun spacemacs/md-select-linum (event)
   "Set point as spacemacs-linum-mdown-line"
@@ -1499,7 +1622,8 @@ if prefix argument ARG is given, switch to it in an other, possibly new window."
     (when (and (not exists)
                (not (eq major-mode dotspacemacs-scratch-mode))
                (fboundp dotspacemacs-scratch-mode))
-      (funcall dotspacemacs-scratch-mode))))
+      (funcall dotspacemacs-scratch-mode)
+      (run-hooks 'spacemacs-scratch-mode-hook))))
 
 (defvar spacemacs--killed-buffer-list nil
   "List of recently killed buffers.")
@@ -1528,11 +1652,20 @@ if prefix argument ARG is given, switch to it in an other, possibly new window."
     (when (evil-evilified-state-p)
       (evil-normal-state))))
 
-(defun spacemacs/close-compilation-window ()
-  "Close the window containing the '*compilation*' buffer."
+(defun spacemacs/show-hide-compilation-window ()
+  "Show/Hide the window containing the compilation buffer."
   (interactive)
-  (when compilation-last-buffer
-    (delete-windows-on compilation-last-buffer)))
+  (when-let ((buffer compilation-last-buffer))
+    (if (get-buffer-window buffer 'visible)
+        (delete-windows-on buffer)
+      (spacemacs/switch-to-compilation-buffer))))
+
+(defun spacemacs/switch-to-compilation-buffer ()
+  "Go to last compilation buffer."
+  (interactive)
+  (if compilation-last-buffer
+      (pop-to-buffer compilation-last-buffer)
+    (user-error "There is no compilation buffer?")))
 
 
 ;; Line number
@@ -1649,38 +1782,46 @@ Decision is based on `dotspacemacs-line-numbers'."
           (not disabled-for-parent)))))
 
 
+;; quick run
+(defun spacemacs/quickrun ()
+  "Call `quickrun' or `quickrun-region'"
+  (interactive)
+  (if (region-active-p)
+      (call-interactively 'quickrun-region)
+    (quickrun)))
+
 ;; randomize region
 
 (defun spacemacs/randomize-words (beg end)
-    "Randomize the order of words in region."
-    (interactive "*r")
-    (let ((all (mapcar
-                (lambda (w) (if (string-match "\\w" w)
-                                ;; Randomize words,
-                                (cons (random) w)
-                              ;; keep everything else in order.
-                              (cons -1 w)))
-                (split-string
-                 (delete-and-extract-region beg end) "\\b")))
-          words sorted)
-      (mapc (lambda (x)
-              ;; Words are numbers >= 0.
-              (unless (> 0 (car x))
-                (setq words (cons x words))))
-            all)
-      ;; Random sort!
-      (setq sorted (sort words
-                         (lambda (a b) (< (car a) (car b)))))
-      (mapc
-       'insert
-       ;; Insert using original list, `all',
-       ;; but pull *words* from randomly-sorted list, `sorted'.
-       (mapcar (lambda (x)
-                 (if (> 0 (car x))
-                     (cdr x)
-                   (prog1 (cdar sorted)
-                     (setq sorted (cdr sorted)))))
-               all))))
+  "Randomize the order of words in region."
+  (interactive "*r")
+  (let ((all (mapcar
+              (lambda (w) (if (string-match "\\w" w)
+                              ;; Randomize words,
+                              (cons (random) w)
+                            ;; keep everything else in order.
+                            (cons -1 w)))
+              (split-string
+               (delete-and-extract-region beg end) "\\b")))
+        words sorted)
+    (mapc (lambda (x)
+            ;; Words are numbers >= 0.
+            (unless (> 0 (car x))
+              (setq words (cons x words))))
+          all)
+    ;; Random sort!
+    (setq sorted (sort words
+                       (lambda (a b) (< (car a) (car b)))))
+    (mapc
+     'insert
+     ;; Insert using original list, `all',
+     ;; but pull *words* from randomly-sorted list, `sorted'.
+     (mapcar (lambda (x)
+               (if (> 0 (car x))
+                   (cdr x)
+                 (prog1 (cdar sorted)
+                   (setq sorted (cdr sorted)))))
+             all))))
 
 (defun spacemacs/randomize-lines (beg end)
   "Randomize lines in region from BEG to END."
@@ -1693,3 +1834,44 @@ Decision is based on `dotspacemacs-line-numbers'."
            (mapcar 'cdr
                    (sort (mapcar (lambda (x) (cons (random) (concat x "\n"))) lines)
                          (lambda (a b) (< (car a) (car b))))))))
+
+
+;; narrow region
+
+(defun spacemacs/clone-indirect-buffer-de-activate-mark ()
+  "This is a workaround for the evil visual state error message like:
+Error in post-command-hook (evil-visual-post-command):
+(error \"Marker points into wrong buffer\" #<marker at 27875 in .spacemacs<2>>)"
+  (let ((region-was-active (region-active-p)))
+    (when region-was-active (deactivate-mark))
+    (call-interactively 'clone-indirect-buffer)
+    (when region-was-active (activate-mark))))
+
+(defun spacemacs/narrow-to-indirect-buffer (narrower target-name)
+  "Use the function `narrower' to narrow within an indirect buffer, except where
+the starting buffer is in a state (such as visual block mode) that would cause
+this to work incorrectly. `target-name' is the string name of the entity being
+narrowed to."
+  ;; There may be a way to get visual block mode working similar to the
+  ;; workaround we did for visual line mode; this usecase however seems like an
+  ;; edgecase at best, so let's patch it if we find out it's needed; otherwise
+  ;; let's not hold up the base functionality anymore.
+  (if (and (eq evil-state 'visual) (eq evil-visual-selection 'block))
+      (message "Cannot narrow to indirect buffer from visual block mode.")
+    (when evil-ex-active-highlights-alist
+      (spacemacs/evil-search-clear-highlight))
+    (spacemacs/clone-indirect-buffer-de-activate-mark)
+    (call-interactively narrower)
+    (message (format "%s narrowed to an indirect buffer" target-name))))
+
+(defun spacemacs/narrow-to-defun-indirect-buffer ()
+  (interactive)
+  (spacemacs/narrow-to-indirect-buffer 'narrow-to-defun "Function"))
+
+(defun spacemacs/narrow-to-page-indirect-buffer ()
+  (interactive)
+  (spacemacs/narrow-to-indirect-buffer 'narrow-to-page "Page"))
+
+(defun spacemacs/narrow-to-region-indirect-buffer ()
+  (interactive)
+  (spacemacs/narrow-to-indirect-buffer 'narrow-to-region "Region"))

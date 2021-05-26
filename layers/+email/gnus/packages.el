@@ -1,19 +1,31 @@
 ;;; packages.el --- gnus Layer packages File for Spacemacs
 ;;
-;; Copyright (c) 2012-2018 Sylvain Benner & Contributors
+;; Copyright (c) 2012-2021 Sylvain Benner & Contributors
 ;;
 ;; Author: Sylvain Benner <sylvain.benner@gmail.com>
 ;; URL: https://github.com/syl20bnr/spacemacs
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
-;;; License: GPLv3
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(setq gnus-packages '(
-                      gnus
-                      window-purpose
-                      persp-mode
-                      ))
+
+(defconst gnus-packages
+  '(
+    gnus
+    window-purpose
+    persp-mode))
 
 (defun gnus/pre-init-persp-mode ()
   (spacemacs|use-package-add-hook persp-mode
@@ -31,12 +43,12 @@
     :commands gnus
     :init
     (progn
-      (spacemacs/declare-prefix "ag" "gnus" "Gnus newsreader")
+      (spacemacs/declare-prefix "aeg" "gnus" "Gnus newsreader")
       (spacemacs/set-leader-keys
-        "agg" 'gnus
-        "ags" 'gnus-slave
-        "agu" 'gnus-unplugged
-        "ago" 'gnus-slave-unplugged)
+        "aegg" 'gnus
+        "aegs" 'gnus-slave
+        "aegu" 'gnus-unplugged
+        "aego" 'gnus-slave-unplugged)
       (spacemacs/declare-prefix-for-mode 'message-mode "mi" "insert")
       (spacemacs/set-leader-keys-for-major-mode 'message-mode
         ;; RFC 1855
@@ -116,12 +128,11 @@
         (kbd "K") 'gnus-summary-prev-article
         (kbd "<RET>") 'spacemacs/browse-nnrss-url))))
 
-(defun gnus/pre-init-window-purpose ()
-  (spacemacs|use-package-add-hook window-purpose
-    :pre-config
-    (dolist (mode '(gnus-group-mode
-                    gnus-server-mode
-                    gnus-browse-mode
-                    gnus-article-mode
-                    gnus-summary-mode))
-      (add-to-list 'purpose-user-mode-purposes (cons mode 'mail)))))
+(defun gnus/post-init-window-purpose ()
+  (purpose-set-extension-configuration
+   :gnus-layer
+   (purpose-conf :mode-purposes '((gnus-group-mode . mail)
+                                  (gnus-server-mode . mail)
+                                  (gnus-browse-mode . mail)
+                                  (gnus-article-mode . mail)
+                                  (gnus-summary-mode . mail)))))

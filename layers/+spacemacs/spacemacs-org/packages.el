@@ -1,13 +1,25 @@
 ;;; packages.el --- spacemacs-org layer packages file for Spacemacs.
 ;;
-;; Copyright (c) 2012-2018 Sylvain Benner & Contributors
+;; Copyright (c) 2012-2021 Sylvain Benner & Contributors
 ;;
 ;; Author: Boris Buliga <d12frosted@d12frosted.local>
 ;; URL: https://github.com/syl20bnr/spacemacs
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
-;;; License: GPLv3
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 ;;; Commentary:
 
@@ -22,7 +34,7 @@
     ;; `org' package.
     (default-org-config :location built-in)
     (org-plus-contrib :step pre)
-    org-bullets
+    org-superstar
     (space-doc :location local)
     toc-org
     ))
@@ -62,10 +74,10 @@
       ;; Open links and files with RET in normal state
       (evil-define-key 'normal org-mode-map (kbd "RET") 'org-open-at-point)))))
 
-(defun spacemacs-org/init-org-bullets ()
-  (use-package org-bullets
+(defun spacemacs-org/init-org-superstar ()
+  (use-package org-superstar
     :defer t
-    :init (add-hook 'org-mode-hook 'org-bullets-mode)))
+    :init (add-hook 'org-mode-hook 'org-superstar-mode)))
 
 (defun spacemacs-org/init-toc-org ()
   (use-package toc-org

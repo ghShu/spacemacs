@@ -1,13 +1,25 @@
 ;;; packages.el --- Spell Checking Layer packages File for Spacemacs
 ;;
-;; Copyright (c) 2012-2018 Sylvain Benner & Contributors
+;; Copyright (c) 2012-2021 Sylvain Benner & Contributors
 ;;
 ;; Author: Sylvain Benner <sylvain.benner@gmail.com>
 ;; URL: https://github.com/syl20bnr/spacemacs
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
-;;; License: GPLv3
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 (setq spell-checking-packages
   '(
@@ -51,14 +63,16 @@
 Spell Commands^^            Add To Dictionary^^               Other
 --------------^^----------  -----------------^^-------------  -----^^---------------------------
 [_b_] check whole buffer    [_B_] add word to dict (buffer)   [_t_] toggle spell check
-[_d_] change dictionary     [_G_] add word to dict (global)   [_q_] exit
-[_n_] next spell error      [_S_] add word to dict (session)  [_Q_] exit and disable spell check
+[_r_] check region          [_G_] add word to dict (global)   [_q_] exit
+[_d_] change dictionary     [_S_] add word to dict (session)  [_Q_] exit and disable spell check
+[_n_] next spell error
 [_c_] correct before point
 [_s_] correct at point"
         :on-enter (flyspell-mode)
         :bindings
         ("B" spacemacs/add-word-to-dict-buffer)
         ("b" flyspell-buffer)
+        ("r" flyspell-region)
         ("d" spell-checking/change-dictionary)
         ("G" spacemacs/add-word-to-dict-global)
         ("n" flyspell-goto-next-error)
@@ -93,6 +107,7 @@ Spell Commands^^            Add To Dictionary^^               Other
         "Sag" 'spacemacs/add-word-to-dict-global
         "Sas" 'spacemacs/add-word-to-dict-session
         "Sb" 'flyspell-buffer
+        "Sr" 'flyspell-region
         "Sd" 'spell-checking/change-dictionary
         "Sn" 'flyspell-goto-next-error
         "Ss" 'flyspell-correct-at-point))
